@@ -283,7 +283,21 @@ std::pair<double, double> VertexPositionGeometry::principalCurvatures(Vertex v) 
 SparseMatrix<double> VertexPositionGeometry::laplaceMatrix() const {
 
     // TODO
-    return identityMatrix<double>(1); // placeholder
+    std::vector<Eigen::Triplet<double>> tripList;
+    for (const auto& v: mesh.vertices())
+    {
+        double sumCot = 0.0f;
+        for (const auto& he : v.outgoingHalfedges())
+        {
+            double cot = edgeCotanWeight(he.edge());
+            sumCot += cot;
+            tripList.emplace_back(Eigen::Triplet<double>(he.tailVertex().getIndex(), he.tipVertex().getIndex(), -cot));
+        }
+        tripList.emplace_back(Eigen::Triplet<double>(v.getIndex(), v.getIndex(), sumCot));
+    }
+    SparseMatrix<double> laplaceMatrix(mesh.nVertices(), mesh.nVertices());
+    laplaceMatrix.setFromTriplets(tripList.begin(), tripList.end());
+    return laplaceMatrix; // placeholder
 }
 
 /*
@@ -295,7 +309,14 @@ SparseMatrix<double> VertexPositionGeometry::laplaceMatrix() const {
 SparseMatrix<double> VertexPositionGeometry::massMatrix() const {
 
     // TODO
-    return identityMatrix<double>(1); // placeholder
+    std::vector<Eigen::Triplet<double>> tripList;
+    for (const auto& v: mesh.vertices())
+    {
+        tripList.emplace_back(Eigen::Triplet<double>(v.getIndex(), v.getIndex(), barycentricDualArea(v)));
+    }
+    SparseMatrix<double> massMatrix(mesh.nVertices(), mesh.nVertices());
+    massMatrix.setFromTriplets(tripList.begin(), tripList.end());
+    return massMatrix; // placeholder
 }
 
 /*

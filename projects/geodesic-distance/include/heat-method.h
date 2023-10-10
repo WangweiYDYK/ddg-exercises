@@ -1,4 +1,5 @@
 #include "geometrycentral/surface/manifold_surface_mesh.h"
+#include "geometrycentral/numerical/linear_solvers.h"
 #include "geometrycentral/surface/vertex_position_geometry.h"
 
 using namespace geometrycentral;
