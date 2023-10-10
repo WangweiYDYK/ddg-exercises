@@ -149,7 +149,13 @@ double VertexPositionGeometry::dihedralAngle(Halfedge he) const {
 Vector3 VertexPositionGeometry::vertexNormalEquallyWeighted(Vertex v) const {
 
     // TODO
-    return {0, 0, 0}; // placeholder
+    Vector3 vertexNormal = {0, 0, 0};
+    for (const auto& f : v.adjacentFaces())
+    {
+        vertexNormal += faceNormal(f);
+    }
+    vertexNormal.normalize();
+    return vertexNormal; // placeholder
 }
 
 /*
@@ -161,7 +167,13 @@ Vector3 VertexPositionGeometry::vertexNormalEquallyWeighted(Vertex v) const {
 Vector3 VertexPositionGeometry::vertexNormalAngleWeighted(Vertex v) const {
 
     // TODO
-    return {0, 0, 0}; // placeholder
+    Vector3 vertexNormal = {0, 0, 0};
+    for (const auto& c : v.adjacentCorners())
+    {
+        vertexNormal += faceNormal(c.face()) * angle(c);
+    }
+    vertexNormal.normalize();
+    return vertexNormal; // placeholder
 }
 
 /*
@@ -185,7 +197,12 @@ Vector3 VertexPositionGeometry::vertexNormalSphereInscribed(Vertex v) const {
 Vector3 VertexPositionGeometry::vertexNormalAreaWeighted(Vertex v) const {
 
     // TODO
-    return {0, 0, 0}; // placeholder
+    Vector3 vertexNormal = {0, 0, 0};
+    for (const auto& f : v.adjacentFaces()) {
+        vertexNormal += faceNormal(f) * faceArea(f);
+    }
+    vertexNormal.normalize();
+    return vertexNormal; // placeholder
 }
 
 /*
