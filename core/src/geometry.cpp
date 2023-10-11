@@ -144,12 +144,11 @@ double VertexPositionGeometry::angle(Corner c) const {
 double VertexPositionGeometry::dihedralAngle(Halfedge he) const {
 
     // TODO
-    const auto normal1 = faceNormal(he.face());
-    const auto normal2 = faceNormal(he.twin().face());
-    const auto crossProduct = cross(normal1, normal2);
-    const auto dotProduct = dot(normal1, normal2);
-    return atan2(crossProduct.norm(), dotProduct);
-    return 0; // placeholder
+    auto n1 = faceNormal(he.face());
+    auto n2 = faceNormal(he.twin().face());
+    auto e = halfedgeVector(he).normalize();
+
+    return atan2(dot(e, cross(n1, n2)), dot(n1, n2));
 }
 
 /*
@@ -184,8 +183,7 @@ Vector3 VertexPositionGeometry::vertexNormalAngleWeighted(Vertex v) const {
     {
         vertexNormal += faceNormal(c.face()) * angle(c);
     }
-    vertexNormal.normalize();
-    return vertexNormal; // placeholder
+    return vertexNormal.normalize(); // placeholder
 }
 
 /*
@@ -220,10 +218,9 @@ Vector3 VertexPositionGeometry::vertexNormalAreaWeighted(Vertex v) const {
     // TODO
     Vector3 vertexNormal = {0, 0, 0};
     for (const auto& f : v.adjacentFaces()) {
-        vertexNormal += faceNormal(f) * faceArea(f);
+        vertexNormal += faceArea(f) * faceNormal(f);
     }
-    vertexNormal.normalize();
-    return vertexNormal; // placeholder
+    return vertexNormal.normalize(); // placeholder
 }
 
 /*
@@ -308,8 +305,7 @@ double VertexPositionGeometry::scalarMeanCurvature(Vertex v) const {
     {
         scalarMeanCurvature += edgeLength(he.edge()) * dihedralAngle(he); 
     }
-    scalarMeanCurvature /= 2;
-    return 0; // placeholder
+    return scalarMeanCurvature /= 2;// placeholder
 }
 
 /*
@@ -369,7 +365,7 @@ SparseMatrix<double> VertexPositionGeometry::laplaceMatrix() const {
             sumCot += cot;
             tripList.emplace_back(Eigen::Triplet<double>(he.tailVertex().getIndex(), he.tipVertex().getIndex(), -cot));
         }
-        tripList.emplace_back(Eigen::Triplet<double>(v.getIndex(), v.getIndex(), sumCot));
+        tripList.emplace_back(Eigen::Triplet<double>(v.getIndex(), v.getIndex(), sumCot + 1e-8));
     }
     SparseMatrix<double> laplaceMatrix(mesh.nVertices(), mesh.nVertices());
     laplaceMatrix.setFromTriplets(tripList.begin(), tripList.end());
@@ -405,7 +401,21 @@ SparseMatrix<double> VertexPositionGeometry::massMatrix() const {
 SparseMatrix<std::complex<double>> VertexPositionGeometry::complexLaplaceMatrix() const {
 
     // TODO
-    return identityMatrix<std::complex<double>>(1); // placeholder
+    std::vector<Eigen::Triplet<double>> tripList;
+    for (const auto& v: mesh.vertices())
+    {
+        std::complex<double> value(0.0, 0.0);
+        for (const auto& he : v.outgoingHalfedges())
+        {
+            double cot = edgeCotanWeight(he.edge());
+            value += cot;
+            tripList.emplace_back(Eigen::Triplet<std::complex<double>>(v.getIndex(), v.getIndex(), std::complex<double>(-cot, 0.0));
+        }
+        tripList.emplace_back(Eigen::Triplet<std::complex<double>>(v.getIndex(), v.getIndex(), value + 1e-8));
+    }
+    SparseMatrix<std::complex<double>> result(mesh.nVertices(), mesh.nVertices());
+    result.setFromTriplets(tripList.begin(), tripList.end());
+    return result; // placeholder
 }
 
 /*
